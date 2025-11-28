@@ -154,6 +154,46 @@ class MpesaController extends Controller
         }
     }
 
+    public function stkStatus(Request $request, $checkoutRequestId)
+{
+    try {
+        $merchantId = $request->merchant_id ?? Merchant::first()?->id;
+        $merchant = Merchant::find($merchantId);
+
+        if (!$merchant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        }
+
+        $mpesa = MpesaService::forMerchant($merchant);
+        $response = $mpesa->stkQuery($checkoutRequestId);
+
+        // Also check database
+        $transaction = MpesaTransaction::where('checkout_request_id', $checkoutRequestId)->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'api_response' => $response,
+                'database_record' => $transaction
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('stk_status_error', [
+            'error' => $e->getMessage(),
+            'checkout_request_id' => $checkoutRequestId
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An error occurred while checking status'
+        ], 500);
+    }
+}
+
     /**
      * API: B2C Payment (Business to Customer)
      */
