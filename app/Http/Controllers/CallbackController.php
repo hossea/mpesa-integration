@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\MpesaTransaction;
-
 class CallbackController extends Controller
 {
     /**

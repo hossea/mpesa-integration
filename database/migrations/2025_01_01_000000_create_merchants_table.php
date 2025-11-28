@@ -21,10 +21,10 @@ $table->json('meta')->nullable();
 $table->timestamps();
 });
 }
-
-
 public function down()
 {
 Schema::dropIfExists('merchants');
 }
 }
+
+

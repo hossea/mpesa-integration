@@ -10,7 +10,6 @@ class MpesaTokenService
 public function __construct(protected $baseUrl, protected $consumerKey, protected $consumerSecret)
 {
 }
-
 public function getToken(): string
 {
 $cacheKey = 'mpesa_token_' . md5($this->consumerKey);

@@ -1,13 +1,12 @@
 <?php
+// app/Models/Merchant.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Merchant extends Model
 {
-protected $guarded = [];
-
-use HasFactory;
     protected $fillable = [
         'name',
         'shortcode',
@@ -18,12 +17,24 @@ use HasFactory;
         'security_credential',
         'meta',
     ];
-protected $casts = [
-'meta' => 'array'
-];
 
- public function transactions()
+    protected $casts = [
+        'meta' => 'array',
+    ];
+
+    protected $hidden = [
+        'consumer_secret',
+        'passkey',
+        'security_credential',
+    ];
+
+    public function transactions(): HasMany
     {
         return $this->hasMany(MpesaTransaction::class);
+    }
+
+    public function isActive(): bool
+    {
+        return !empty($this->consumer_key) && !empty($this->consumer_secret);
     }
 }

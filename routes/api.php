@@ -55,3 +55,6 @@ Route::post('/confirm', [CallbackController::class, 'confirmation']);
 Route::post('/stk-callback', [CallbackController::class, 'stkCallback']);
 Route::post('/b2c-callback', [CallbackController::class, 'b2cResult']);
 Route::post('/b2b-callback', [CallbackController::class, 'b2bResult']);
+
+Route::middleware('api_key.auth')->get('/payments', [MpesaController::class, 'index']);
+

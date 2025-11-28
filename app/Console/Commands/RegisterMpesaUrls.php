@@ -10,7 +10,6 @@ class RegisterMpesaUrls extends Command
 {
     protected $signature = 'mpesa:register {--force : Force registration attempt} {--test : Test endpoints only}';
     protected $description = 'Register M-Pesa C2B validation and confirmation URLs';
-
     public function handle()
     {
         $this->info('===========================================');

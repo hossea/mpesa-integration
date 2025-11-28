@@ -28,7 +28,6 @@ class MpesaService
             $this->merchant->consumer_secret ?? env('MPESA_CONSUMER_SECRET')
         );
     }
-
     public static function forMerchant(Merchant $merchant): MpesaService
     {
         return new self($merchant);
