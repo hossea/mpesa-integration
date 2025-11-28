@@ -16,3 +16,5 @@ class Kernel extends ConsoleKernel
 Artisan::command('mpesa:register', function () {
     $this->call('mpesa:register-urls');
 });
+
+

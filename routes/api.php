@@ -40,13 +40,13 @@ Route::post('/callback/c2b/confirmation', [CallbackController::class, 'c2bConfir
 
 
 /* ---- B2C Callbacks ---- */
-Route::post('/mpesa/b2c/result', [CallbackController::class, 'b2cResult']);
-Route::post('/mpesa/b2c/timeout', [CallbackController::class, 'b2cTimeout']);
+Route::post('/b2c/result', [CallbackController::class, 'b2cResult']);
+Route::post('/b2c/timeout', [CallbackController::class, 'b2cTimeout']);
 
 
 /* ---- B2B Callbacks ---- */
-Route::post('/mpesa/b2b/result', [CallbackController::class, 'b2bResult']);
-Route::post('/mpesa/b2b/timeout', [CallbackController::class, 'b2bTimeout']);
+Route::post('/b2b/result', [CallbackController::class, 'b2bResult']);
+Route::post('/b2b/timeout', [CallbackController::class, 'b2bTimeout']);
 
 
 /* ---- Legacy testing endpoints (optional) ---- */
