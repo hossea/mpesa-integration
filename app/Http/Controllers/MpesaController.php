@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\MpesaService;
 use App\Models\MpesaTransaction;
+use App\Models\UserPaymentConfig;
 use App\Models\Merchant;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use App\Models\ApiClient;
 
 class MpesaController extends Controller
 {
@@ -474,6 +478,186 @@ class MpesaController extends Controller
     }
 
     /**
+     * Get transaction history
+     */
+    public function transactions(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'merchant_id' => 'nullable|exists:merchants,id',
+            'type' => 'nullable|in:stk,c2b,b2c,b2b',
+            'status' => 'nullable|in:pending,processing,success,failed,timeout',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $query = MpesaTransaction::query();
+
+        // Filter by merchant
+        if ($request->merchant_id) {
+            $query->where('merchant_id', $request->merchant_id);
+        } else {
+            $merchant = Merchant::first();
+            if ($merchant) {
+                $query->where('merchant_id', $merchant->id);
+            }
+        }
+
+        // Filter by type
+        if ($request->type) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by status
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by date range
+        if ($request->from_date) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+        if ($request->to_date) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        $perPage = $request->per_page ?? 20;
+        $transactions = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $transactions
+        ]);
+    }
+
+    /**
+     * Get single transaction details
+     */
+    public function transactionDetail($id)
+    {
+        $transaction = MpesaTransaction::find($id);
+
+        if (!$transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $transaction
+        ]);
+    }
+
+    /**
+     * Process payment with user's saved configuration
+     */
+    public function processWithConfig(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'config_id' => 'required|exists:user_payment_configs,id',
+            'phone' => 'required',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $config = UserPaymentConfig::find($request->config_id);
+            $phone = $this->formatPhone($request->phone);
+
+            $merchant = Merchant::first();
+            if (!$merchant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Merchant configuration not found'
+                ], 404);
+            }
+
+            // Create transaction record
+            $txn = MpesaTransaction::create([
+                'merchant_id' => $merchant->id,
+                'type' => 'stk',
+                'phone' => $phone,
+                'amount' => $request->amount,
+                'request_payload' => [
+                    'config_id' => $config->id,
+                    'config_name' => $config->config_name,
+                    'shortcode' => $config->shortcode,
+                    'account_number' => $config->account_number,
+                ],
+                'status' => 'pending',
+            ]);
+
+            // Initiate STK push
+            $mpesa = MpesaService::forMerchant($merchant);
+
+            $accountRef = $config->isPaybill()
+                ? $config->account_number
+                : "TXN-{$txn->id}";
+
+            $description = "{$config->config_name} Payment";
+
+            $response = $mpesa->stkPush($phone, $request->amount, $accountRef, $description);
+
+            // Update transaction with response
+            $txn->update([
+                'response_payload' => $response,
+                'checkout_request_id' => $response['CheckoutRequestID'] ?? null,
+                'merchant_request_id' => $response['MerchantRequestID'] ?? null,
+            ]);
+
+            if (isset($response['ResponseCode']) && $response['ResponseCode'] == '0') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment initiated successfully',
+                    'data' => [
+                        'transaction_id' => $txn->id,
+                        'checkout_request_id' => $response['CheckoutRequestID'] ?? null,
+                        'config' => [
+                            'name' => $config->config_name,
+                            'type' => $config->type,
+                            'identifier' => $config->getFullIdentifier()
+                        ]
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $response['errorMessage'] ?? 'Payment initiation failed',
+                'data' => $response
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error('process_with_config_error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing your request'
+            ], 500);
+        }
+    }
+
+    /**
      * Format phone number to 254XXXXXXXXX
      */
     private function formatPhone($phone)
@@ -494,4 +678,34 @@ class MpesaController extends Controller
 
         return $p;
     }
+
+    public function testStkPush()
+{
+    $timestamp = date('YmdHis');
+    $password  = base64_encode(env('MPESA_SHORTCODE') . env('MPESA_PASSKEY') . $timestamp);
+
+    $curl_post_data = [
+        'BusinessShortCode' => env('MPESA_SHORTCODE'),
+        'Password' => $password,
+        'Timestamp' => $timestamp,
+        'TransactionType' => 'CustomerPayBillOnline',
+        'Amount' => 1,
+        'PartyA' => '254714484762',   // Your real phone number
+        'PartyB' => env('MPESA_SHORTCODE'),
+        'PhoneNumber' => '254714484762',
+        'CallBackURL' => env('MPESA_STKPUSH_CALLBACK'),
+        'AccountReference' => 'TestRef',
+        'TransactionDesc' => 'Test Payment'
+    ];
+
+    $merchant = Merchant::first();
+    $mpesa = MpesaService::forMerchant($merchant);
+    $access_token = $mpesa->getToken(); // Use the correct method to get the access token
+
+    $response = Http::withToken($access_token)
+        ->post(env('MPESA_BASE_URL_SANDBOX') . '/mpesa/stkpush/v1/processrequest', $curl_post_data);
+
+    return $response->json();
+}
+
 }

@@ -44,7 +44,7 @@ class MpesaService
         return $this->merchant;
     }
 
-    protected function getToken(): string
+    public function getToken(): string
     {
         return $this->tokenService->getToken();
     }
@@ -342,4 +342,5 @@ class MpesaService
             return ['error' => $e->getMessage()];
         }
     }
+
 }

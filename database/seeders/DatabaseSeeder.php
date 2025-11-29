@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->command->info("✅ Default merchant created: {$merchant->name}");
+        $this->command->info("Default merchant created: {$merchant->name}");
 
         // Create default API client
         $apiKey = Str::random(64);
@@ -44,9 +44,9 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->command->info("✅ API Client created: {$apiClient->name}");
-        $this->command->warn("📋 API Key: {$apiClient->api_key}");
-        $this->command->warn("⚠️  IMPORTANT: Save this API key securely! You'll need it for API requests.");
+        $this->command->info("API Client created: {$apiClient->name}");
+        $this->command->warn("API Key: {$apiClient->api_key}");
+        $this->command->warn(" IMPORTANT: Save this API key securely! You'll need it for API requests.");
 
         // Create test merchant for multi-tenant testing (optional)
         if (env('APP_ENV') === 'local') {
@@ -66,11 +66,11 @@ class DatabaseSeeder extends Seeder
                 ]
             );
 
-            $this->command->info("✅ Test merchant created: {$testMerchant->name}");
+            $this->command->info("Test merchant created: {$testMerchant->name}");
         }
 
-        $this->command->info("\n🎉 Database seeding completed successfully!");
-        $this->command->info("\n📝 Next steps:");
+        $this->command->info("\n Database seeding completed successfully!");
+        $this->command->info("\n Next steps:");
         $this->command->info("1. Update your .env file with M-Pesa credentials");
         $this->command->info("2. Start the server: php artisan serve");
         $this->command->info("3. Test STK Push at: http://localhost:8000");

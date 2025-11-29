@@ -30,8 +30,28 @@
             box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.1);
         }
 
-        .phone-input {
-            padding-left: 3.5rem;
+        /* FIXED: Remove phone-input class padding conflict */
+        .phone-prefix-container {
+            position: relative;
+        }
+
+        .phone-prefix {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6B7280;
+            font-weight: 500;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .phone-input-field {
+            padding-left: 5.5rem !important;
+        }
+
+        .amount-input-field {
+            padding-left: 4.5rem !important;
         }
 
         .loader {
@@ -85,87 +105,6 @@
         .payment-method.active {
             border-color: #00a651;
             background: rgba(0, 166, 81, 0.05);
-        }
-
-        .success-checkmark {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto;
-        }
-
-        .success-checkmark .check-icon {
-            width: 80px;
-            height: 80px;
-            position: relative;
-            border-radius: 50%;
-            box-sizing: content-box;
-            border: 4px solid #00a651;
-        }
-
-        .success-checkmark .check-icon::before {
-            top: 3px;
-            left: -2px;
-            width: 30px;
-            transform-origin: 100% 50%;
-            border-radius: 100px 0 0 100px;
-        }
-
-        .success-checkmark .check-icon::after {
-            top: 0;
-            left: 30px;
-            width: 60px;
-            transform-origin: 0 50%;
-            border-radius: 0 100px 100px 0;
-            animation: rotate-circle 4.25s ease-in;
-        }
-
-        .success-checkmark .check-icon::before,
-        .success-checkmark .check-icon::after {
-            content: '';
-            height: 100px;
-            position: absolute;
-            background: #fff;
-            transform: rotate(-45deg);
-        }
-
-        .success-checkmark .check-icon .icon-line {
-            height: 5px;
-            background-color: #00a651;
-            display: block;
-            border-radius: 2px;
-            position: absolute;
-            z-index: 10;
-        }
-
-        .success-checkmark .check-icon .icon-line.line-tip {
-            top: 46px;
-            left: 14px;
-            width: 25px;
-            transform: rotate(45deg);
-            animation: icon-line-tip 0.75s;
-        }
-
-        .success-checkmark .check-icon .icon-line.line-long {
-            top: 38px;
-            right: 8px;
-            width: 47px;
-            transform: rotate(-45deg);
-            animation: icon-line-long 0.75s;
-        }
-
-        @keyframes icon-line-tip {
-            0% { width: 0; left: 1px; top: 19px; }
-            54% { width: 0; left: 1px; top: 19px; }
-            70% { width: 50px; left: -8px; top: 37px; }
-            84% { width: 17px; left: 21px; top: 48px; }
-            100% { width: 25px; left: 14px; top: 45px; }
-        }
-
-        @keyframes icon-line-long {
-            0% { width: 0; right: 46px; top: 54px; }
-            65% { width: 0; right: 46px; top: 54px; }
-            84% { width: 55px; right: 0px; top: 35px; }
-            100% { width: 47px; right: 8px; top: 38px; }
         }
     </style>
 </head>
@@ -227,21 +166,47 @@
                     <input type="hidden" name="type" id="paymentType" value="till">
                 </div>
 
+                <!-- Till/Paybill Number (conditionally shown) -->
+                <div id="tillPaybillContainer" style="display: none;">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span id="tillPaybillLabel">Till Number</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="till_paybill_number"
+                        id="tillPaybillNumber"
+                        placeholder="Enter till/paybill number"
+                        class="w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
+                    >
+                </div>
+
+                <!-- Account Number (for Paybill only) -->
+                <div id="accountContainer" style="display: none;">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Account Number
+                    </label>
+                    <input
+                        type="text"
+                        name="account_number"
+                        id="accountNumber"
+                        placeholder="Enter account number"
+                        class="w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
+                    >
+                </div>
+
                 <!-- Phone Number -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         Phone Number
                     </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span class="text-gray-500 font-medium">🇰🇪 +254</span>
-                        </div>
+                    <div class="phone-prefix-container">
+                        <span class="phone-prefix">🇰🇪 +254</span>
                         <input
                             type="tel"
                             name="phone"
                             id="phoneInput"
                             placeholder="712345678"
-                            class="phone-input w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
+                            class="phone-input-field w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
                             required
                             pattern="[0-9]{9}"
                             maxlength="9"
@@ -255,17 +220,15 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         Amount (KES)
                     </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span class="text-gray-500 font-medium">KES</span>
-                        </div>
+                    <div class="phone-prefix-container">
+                        <span class="phone-prefix">KES</span>
                         <input
                             type="number"
                             name="amount"
                             id="amountInput"
                             placeholder="100"
                             min="1"
-                            class="phone-input w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
+                            class="amount-input-field w-full border-2 border-gray-200 rounded-xl py-3 px-4 input-focus transition-all duration-200"
                             required
                         >
                     </div>
@@ -344,7 +307,26 @@
             method.addEventListener('click', function() {
                 document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
                 this.classList.add('active');
-                document.getElementById('paymentType').value = this.dataset.type;
+                const type = this.dataset.type;
+                document.getElementById('paymentType').value = type;
+
+                // Show/hide till/paybill fields
+                const tillPaybillContainer = document.getElementById('tillPaybillContainer');
+                const accountContainer = document.getElementById('accountContainer');
+                const tillPaybillLabel = document.getElementById('tillPaybillLabel');
+
+                if (type === 'till') {
+                    tillPaybillContainer.style.display = 'block';
+                    accountContainer.style.display = 'none';
+                    tillPaybillLabel.textContent = 'Till Number';
+                } else if (type === 'paybill') {
+                    tillPaybillContainer.style.display = 'block';
+                    accountContainer.style.display = 'block';
+                    tillPaybillLabel.textContent = 'Paybill Number';
+                } else {
+                    tillPaybillContainer.style.display = 'none';
+                    accountContainer.style.display = 'none';
+                }
             });
         });
 
