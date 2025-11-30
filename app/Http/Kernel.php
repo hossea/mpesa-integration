@@ -2,8 +2,7 @@
 
 namespace App\Http;
 
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use App\Http\Middleware\ApiKeyAuth;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;;
 
 class Kernel extends HttpKernel
 {
@@ -58,7 +57,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // ✅ Your API Key Middleware
+        // Your API Key Middleware
         'api_key.auth' => \App\Http\Middleware\ApiKeyAuth::class,
     ];
 

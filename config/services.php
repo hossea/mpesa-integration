@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'mpesa' => [
+        'gateway_url' => env('MPESA_GATEWAY_URL'),
+        'api_key' => env('MPESA_GATEWAY_API_KEY'),
+        'webhook_secret' => env('MPESA_WEBHOOK_SECRET'),
+    ],
+
 ];

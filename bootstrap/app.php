@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'api_key.auth' => \App\Http\Middleware\ApiKeyAuth::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

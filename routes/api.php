@@ -60,3 +60,6 @@ Route::post('/mpesa/b2c/timeout', [CallbackController::class, 'b2cTimeout']);
 // B2B Callbacks
 Route::post('/mpesa/b2b/result', [CallbackController::class, 'b2bResult']);
 Route::post('/mpesa/b2b/timeout', [CallbackController::class, 'b2bTimeout']);
+
+// Public health check (no API key required)
+Route::get('/health', [MpesaController::class, 'health']);
